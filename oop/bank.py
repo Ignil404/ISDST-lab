@@ -1,5 +1,3 @@
-"""Банк: коллекция счетов и операции, затрагивающие несколько счетов."""
-
 from typing import Dict
 
 from oop.account import Account
@@ -7,8 +5,6 @@ from oop.errors import AccountNotFoundError, DuplicateAccountError
 
 
 class Bank:
-    """Управляет учётом счетов и переводами между ними."""
-
     def __init__(self):
         self._accounts: Dict[str, Account] = {}
 

@@ -1,12 +1,8 @@
-"""Консольный интерфейс пользователя (ввод/вывод отделён от доменной логики)."""
-
 from oop.bank import Bank
 from oop.errors import AccountNotFoundError, InsufficientFundsError
 
 
 class BankConsole:
-    """Строит банк и транслирует действия пользователя в вызовы банка."""
-
     def __init__(self, bank: Bank = None):
         self._bank = bank if bank is not None else Bank()
 

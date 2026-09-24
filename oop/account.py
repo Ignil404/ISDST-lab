@@ -1,13 +1,9 @@
-"""Счёт клиента: баланс и история операций."""
-
 from typing import List
 
 from oop.errors import InsufficientFundsError
 
 
 class Account:
-    """Инкапсулирует состояние счёта и операции над собственным балансом."""
-
     def __init__(self, account_id: str, owner: str, initial_balance: float = 0.0):
         if initial_balance < 0:
             raise ValueError("Начальный баланс не может быть отрицательным")

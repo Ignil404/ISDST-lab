@@ -1,5 +1,3 @@
-"""Демонстрационный сценарий для ООП-реализации."""
-
 from oop.bank import Bank
 from oop.errors import InsufficientFundsError
 

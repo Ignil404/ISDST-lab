@@ -1,5 +1,3 @@
-"""Точка входа: запуск интерактивной консоли банка."""
-
 from oop.console import BankConsole
 
 
