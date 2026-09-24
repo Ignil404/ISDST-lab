@@ -1,21 +1,11 @@
-"""
-Задача 3: Банковский счёт — СТРУКТУРНЫЙ СТИЛЬ.
-
-Данные и логика разделены: счета хранятся в обычных словарях,
-вся логика реализована функциями, которые принимают эти словари
-как аргументы и изменяют их.
-"""
-
 from typing import Dict, List, Optional
 
 
 def create_bank() -> Dict[str, dict]:
-    """Создать пустое хранилище счетов: {номер_счёта: данные_счёта}."""
     return {}
 
 
 def open_account(bank: Dict[str, dict], account_id: str, owner: str, initial_balance: float = 0.0) -> None:
-    """Открыть новый счёт с нулевым (или заданным) балансом."""
     if account_id in bank:
         raise ValueError(f"Счёт {account_id} уже существует")
     if initial_balance < 0:
@@ -23,7 +13,7 @@ def open_account(bank: Dict[str, dict], account_id: str, owner: str, initial_bal
     bank[account_id] = {
         "owner": owner,
         "balance": initial_balance,
-        "history": [],  # список строк с описанием операций
+        "history": [],
     }
 
 
@@ -32,7 +22,6 @@ def _add_history(account: dict, text: str) -> None:
 
 
 def deposit(bank: Dict[str, dict], account_id: str, amount: float) -> None:
-    """Пополнение счёта."""
     if amount <= 0:
         raise ValueError("Сумма пополнения должна быть положительной")
     account = bank[account_id]
@@ -41,7 +30,6 @@ def deposit(bank: Dict[str, dict], account_id: str, amount: float) -> None:
 
 
 def withdraw(bank: Dict[str, dict], account_id: str, amount: float) -> None:
-    """Снятие со счёта с проверкой баланса."""
     if amount <= 0:
         raise ValueError("Сумма снятия должна быть положительной")
     account = bank[account_id]
@@ -52,7 +40,6 @@ def withdraw(bank: Dict[str, dict], account_id: str, amount: float) -> None:
 
 
 def transfer(bank: Dict[str, dict], from_id: str, to_id: str, amount: float) -> None:
-    """Перевод с одного счёта на другой."""
     if from_id == to_id:
         raise ValueError("Нельзя переводить самому себе")
     withdraw(bank, from_id, amount)
@@ -62,7 +49,6 @@ def transfer(bank: Dict[str, dict], from_id: str, to_id: str, amount: float) -> 
 
 
 def get_history(bank: Dict[str, dict], account_id: str, n: int) -> List[str]:
-    """Последние N операций по счёту."""
     return bank[account_id]["history"][-n:]
 
 
@@ -71,7 +57,6 @@ def get_balance(bank: Dict[str, dict], account_id: str) -> float:
 
 
 def demo() -> None:
-    """Небольшой демонстрационный сценарий."""
     bank = create_bank()
     open_account(bank, "acc1", "Иван Иванов", 100.0)
     open_account(bank, "acc2", "Пётр Петров", 50.0)
@@ -95,7 +80,6 @@ def demo() -> None:
 
 
 def interactive() -> None:
-    """Интерактивная работа с банком через консольное меню."""
     bank = create_bank()
     print("Добро пожаловать в банк (структурный стиль)!")
 
