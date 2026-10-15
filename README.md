@@ -97,21 +97,17 @@ git checkout -b lab_5
 
 # 1. Базовый коммит
 mkdir -p bot-reminder
-cp /Users/ignil/Desktop/bot-reminder-lab5/config.json bot-reminder/
-cp /Users/ignil/Desktop/bot-reminder-lab5/bot.py bot-reminder/
 git add bot-reminder/config.json bot-reminder/bot.py
 git commit -m "init: base config and demo script for reminder bot"
 
 # 2. Ветка morning-schedule
 git checkout -b lab_5_morning-schedule
-cp /Users/ignil/Desktop/bot-reminder-lab5/config_morning-schedule.json bot-reminder/config.json
 git add bot-reminder/config.json
 git commit -m "feat(morning): shift time to 07:30, extend morning messages"
 
 # 3. Ветка evening-texts
 git checkout lab_5
 git checkout -b lab_5_evening-schedule
-cp /Users/ignil/Desktop/bot-reminder-lab5/config_evening-texts.json bot-reminder/config.json
 git add bot-reminder/config.json
 git commit -m "feat(evening): shift time, add emoji"
 
@@ -121,11 +117,8 @@ git merge lab_5_morning-schedule --no-ff -m "merge: merge morning-schedule branc
 
 # 5. Второй merge — КОНФЛИКТ
 git merge lab_5_evening-schedule --no-ff
-# Auto-merging bot-reminder/config.json
-# CONFLICT (content): Merge conflict in bot-reminder/config.json
 
 # 6. Разрешение конфликта
-cp /Users/ignil/Desktop/bot-reminder-lab5/config_resolved.json bot-reminder/config.json
 git add bot-reminder/config.json
 git commit -m "resolve: merge morning and evening modes, resolve conflict"
 
