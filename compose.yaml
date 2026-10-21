@@ -1,0 +1,46 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clinic-app
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CACHE_TTL: ${CACHE_TTL:-30}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - clinic
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: clinic-redis
+    # порт наружу не пробрасываем: Redis виден только из compose-сети
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    networks:
+      - clinic
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  redis-data:
+
+networks:
+  clinic:
+    name: clinic-net
