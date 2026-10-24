@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: Запись к врачу в поликлинике
+  description: >
+    Учебный mock-API онлайн-записи на приём в поликлинику. Позволяет найти врача
+    по специальности, посмотреть свободные 30-минутные слоты приёма, записаться
+    на приём и отменить запись. Реализация — заглушка в `api/server.py` (данные
+    в памяти), коды ответов и схемы согласованы с `docs/user.md` и `docs/tech.md`.
+  version: 1.0.0
+  license:
+    name: Учебный материал
+servers:
+  - url: http://127.0.0.1:8000
+    description: Локальный запуск mock-сервера (python3 api/server.py)
+tags:
+  - name: doctors
+    description: Врачи поликлиники и их слоты приёма
+  - name: appointments
+    description: Записи на приём (создание, просмотр, отмена)
+paths:
+  /doctors:
+    get:
+      tags: [doctors]
+      summary: Список врачей
+      description: >
+        Возвращает всех врачей поликлиники; параметр `specialty` фильтрует
+        по подстроке специальности (регистронезависимо), например `лор`.
+      operationId: listDoctors
+      parameters:
+        - name: specialty
+          in: query
+          required: false
+          description: Подстрока названия специальности для фильтрации
+          schema:
+            type: string
+          example: лор
+      responses:
+        '200':
+          description: Список врачей (возможно пустой)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Doctor'
+  /doctors/{doctorId}:
+    get:
+      tags: [doctors]
+      summary: Карточка врача
+      description: Возвращает данные врача — ФИО, специальность и номер кабинета приёма.
+      operationId: getDoctor
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          description: Идентификатор врача
+          schema:
+            type: string
+          example: doc-001
+      responses:
+        '200':
+          description: Данные врача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Doctor'
+        '404':
+          description: Врач не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /doctors/{doctorId}/slots:
+    get:
+      tags: [doctors]
+      summary: Свободные слоты приёма
+      description: >
+        Возвращает только свободные (`free`) 30-минутные слоты врача; занятые
+        и прошедшие слоты не включаются. Без параметра `date` — все доступные дни.
+      operationId: listDoctorSlots
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          description: Идентификатор врача
+          schema:
+            type: string
+          example: doc-001
+        - name: date
+          in: query
+          required: false
+          description: Дата приёма в формате YYYY-MM-DD
+          schema:
+            type: string
+            format: date
+          example: '2026-10-26'
+      responses:
+        '200':
+          description: Список свободных слотов (возможно пустой)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Slot'
+        '404':
+          description: Врач не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Некорректный формат параметра date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /appointments:
+    post:
+      tags: [appointments]
+      summary: Создать запись на приём
+      description: >
+        Бронирует свободный слот за пациентом. Возвращает `201` с созданной
+        записью (статус `booked`). Если слот уже занят — `409`; если время
+        приёма уже прошло — `422`.
+      operationId: createAppointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppointmentRequest'
+      responses:
+        '201':
+          description: Запись создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '404':
+          description: Врач или слот не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Слот уже занят другой записью
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Некорректные данные или время приёма уже прошло
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags: [appointments]
+      summary: Список записей
+      description: >
+        Возвращает записи на приём (все записи, без привязки к пользователю). Параметр `status` фильтрует по статусу, например `booked` покажет только активные записи.
+      operationId: listAppointments
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Фильтр по статусу записи
+          schema:
+            type: string
+            enum: [booked, cancelled]
+      responses:
+        '200':
+          description: Список записей (возможно пустой)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+  /appointments/{appointmentId}:
+    get:
+      tags: [appointments]
+      summary: Карточка записи
+      description: Возвращает запись по идентификатору — врач, слот, пациент и статус.
+      operationId: getAppointment
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          description: Идентификатор записи
+          schema:
+            type: string
+          example: apt-1
+      responses:
+        '200':
+          description: Данные записи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '404':
+          description: Запись не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [appointments]
+      summary: Отменить запись
+      description: >
+        Отменяет активную запись: статус становится `cancelled`, слот
+        освобождается и снова виден как `free`. Повторная отмена — `409`.
+      operationId: cancelAppointment
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          description: Идентификатор записи
+          schema:
+            type: string
+          example: apt-1
+      responses:
+        '200':
+          description: Запись отменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '404':
+          description: Запись не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Запись уже отменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Doctor:
+      type: object
+      description: Врач поликлиники
+      properties:
+        id:
+          type: string
+          description: Идентификатор врача
+          example: doc-001
+        name:
+          type: string
+          description: ФИО врача
+          example: Иванова Анна Петровна
+        specialty:
+          type: string
+          description: Специальность
+          example: терапевт
+        office:
+          type: string
+          description: Номер кабинета приёма
+          example: каб. 214
+      required: [id, name, specialty, office]
+    Slot:
+      type: object
+      description: 30-минутный интервал приёма конкретного врача
+      properties:
+        id:
+          type: string
+          description: Идентификатор слота
+          example: doc-001_2026-10-26_1030
+        doctor_id:
+          type: string
+          description: Идентификатор врача
+          example: doc-001
+        start_time:
+          type: string
+          format: date-time
+          description: Начало приёма (ISO 8601, Europe/Minsk)
+          example: '2026-10-26T10:30:00+03:00'
+        end_time:
+          type: string
+          format: date-time
+          description: Конец приёма (ISO 8601, Europe/Minsk)
+          example: '2026-10-26T11:00:00+03:00'
+        status:
+          type: string
+          description: 'Статус слота: free — свободен, booked — занят'
+          enum: [free, booked]
+          example: free
+      required: [id, doctor_id, start_time, end_time, status]
+    Appointment:
+      type: object
+      description: Запись пациента на слот приёма
+      properties:
+        id:
+          type: string
+          description: Идентификатор записи
+          example: apt-1
+        doctor_id:
+          type: string
+          description: Идентификатор врача
+          example: doc-001
+        slot_id:
+          type: string
+          description: Забронированный слот
+          example: doc-001_2026-10-26_1030
+        patient_name:
+          type: string
+          description: Кто выходит на приём
+          example: Буслович Тимур Игнатович
+        patient_birthday:
+          type: string
+          format: date
+          description: Дата рождения пациента (опционально)
+          example: '2014-05-12'
+        comment:
+          type: string
+          description: Жалоба или комментарий к записи (опционально)
+          example: болит горло третий день
+        status:
+          type: string
+          description: 'Статус записи: booked — активна, cancelled — отменена'
+          enum: [booked, cancelled]
+          example: booked
+      required: [id, doctor_id, slot_id, patient_name, status]
+    CreateAppointmentRequest:
+      type: object
+      description: Тело запроса на создание записи
+      properties:
+        doctor_id:
+          type: string
+          description: Идентификатор врача
+          example: doc-001
+        slot_id:
+          type: string
+          description: Идентификатор свободного слота
+          example: doc-001_2026-10-26_1030
+        patient_name:
+          type: string
+          description: Кто выходит на приём (для ребёнка — ребёнок)
+          example: Буслович Тимур Игнатович
+        patient_birthday:
+          type: string
+          format: date
+          description: Дата рождения пациента (опционально)
+          example: '2014-05-12'
+        comment:
+          type: string
+          description: Жалоба или комментарий (опционально)
+          example: болит горло третий день
+      required: [doctor_id, slot_id, patient_name]
+    Error:
+      type: object
+      description: 'Ошибка в формате {"error": {...}}'
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Машинный код ошибки
+              example: slot_busy
+            message:
+              type: string
+              description: Человекочитаемое описание
+              example: слот уже занят
+          required: [code, message]
+      required: [error]
